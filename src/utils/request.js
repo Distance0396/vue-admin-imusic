@@ -7,16 +7,14 @@ import { getToken } from '@/utils/auth'
 const service = axios.create({
   baseURL: '/api', // url = base url + request url
   // withCredentials: true, // send cookies when cross-domain requests
-  timeout: 5000 // request timeout
+  timeout: 5000, // request timeout
+  headers: { 'Content-Type': 'application/json' }
 })
 
 // request interceptor
 service.interceptors.request.use(
   config => {
     // do something before request is sent
-    if (config == null) {
-      this.$message.error('数据不能为空')
-    }
     if (store.getters.token) {
       // let each request carry token
       // ['X-Token'] is a custom headers key

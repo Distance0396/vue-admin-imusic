@@ -1,122 +1,198 @@
-<template>
-  <div class="app-container">
-    <el-form ref="form" :model="form" label-width="120px">
-      <el-form-item label="歌手">
-        <el-input v-model="form.singer"/>
-      </el-form-item>
-      <el-form-item label="歌曲名称">
-        <el-input v-model="form.name"/>
-      </el-form-item>
-      <el-form-item label="所属专辑">
-        <el-select v-model="form.album" placeholder="选择所属专辑">
-          <el-option label="单曲" value="0"></el-option>
-          <el-option label="不是单曲" value="1"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="添加音乐">
-        <el-upload
-          class="upload-demo"
-          drag
-          action="http://localhost:8011/common/upload"
-          :on-success="handleAvatarSuccess"
-          :before-upload="beforeAvatarUpload"
-          :auto-upload="true">
-          <i class="el-icon-upload"></i>
-          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-          <div class="el-upload__tip" slot="tip">只能上传audio/mp3文件，且不超过100mb</div>
-        </el-upload>
-      </el-form-item>
-      <!--      添加的歌曲为单曲时不显示发行时间选项-->
-      <el-form-item v-show="form.record !== '0'" label="发行时间">
-        <el-col :span="11">
-          <el-date-picker v-model="form.date1" type="date" placeholder="Pick a date" style="width: 100%;"/>
-        </el-col>
-      </el-form-item>
-      <el-form-item v-show="form.record !== '0'" label="次序">
-        <el-input v-model="form.sort"/>
-      </el-form-item>
-      <el-form-item label="歌词">
-        <el-input v-model="form.desc" type="textarea"/>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">上传</el-button>
-        <el-button @click="onCancel">取消</el-button>
-      </el-form-item>
-    </el-form>
-  </div>
-</template>
-
 <script>
-import { upload } from '@/api/common'
-
+import MusicBlock from '@/views/form/block/musicBlock.vue'
+import { getPageMusic } from '@/api/music'
 export default {
+  components: {
+    MusicBlock
+  },
   data() {
     return {
-      imageUrl: '',
-      form: {
-        // 歌手名
-        singer: '',
-        // 音乐名
+      // 接受返回的数据集
+      tableData: [],
+      // 勾选音乐行数组
+      checkBoxList: [],
+      // 勾选音乐行id数组
+      idList: '',
+      // 分页搜索对象
+      page: {
+        page: 1,
+        pageSize: 8,
         name: '',
-        // 所属专辑
-        album: '0',
-        date1: '',
-        sort: '',
-        date2: '',
-        delivery: false,
-        type: [],
-        resource: '',
-        desc: ''
-      }
+        album: ''
+      },
+      // 总数据条数
+      totalNum: 0,
+      // 控制添加歌手块显示的显示
+      dialogFormVisible: false
     }
   },
+  created: function() {
+    this.pageSearch()
+  },
   methods: {
-    onSubmit() {
-      this.$message('submit!')
+    async pageSearch() {
+      const { data } = await getPageMusic(this.page)
+      // 总数据条
+      this.totalNum = data.total
+      // 接受返回的数据集
+      this.tableData = data.page
     },
-    onCancel() {
-      this.$message({
-        message: 'cancel!',
-        type: 'warning'
-      })
+    watchFormVisible() {
+      this.dialogFormVisible = false
     },
-    uploadOk(event) {
-      console.log('uploadOk')
-      console.log(event)
-      const formData = new FormData()
-      formData.append('file', event.file)
-      upload(formData).then(res => {
-        console.log(res)
-      }).catch(err => {
-        this.$message.error(err)
-      })
+    // 点击分页触发
+    pageChange(e) {
+      this.page.page = e
+      // this.pageSearch()
     },
-    handleAvatarSuccess(res, file) {
-      // console.log(res)
-      // console.log(file)
-      // this.imageUrl = URL.createObjectURL(file.raw)
+    // 勾选行触发
+    checkBox(e) {
+      this.checkBoxList = e
     },
-    beforeAvatarUpload(file) {
-      this.audio = file
-      console.log(file)
-      const isMP3 = file.type === 'audio/mpeg'
-      const isLt100M = file.size / 1024 / 1024 < 100
-
-      if (!isMP3) {
-        this.$message.error('上传音频只能是 mp3 格式!')
-      }
-      if (!isLt100M) {
-        this.$message.error('上传音频大小不能超过 100MB!')
-      }
-      return isMP3 && isLt100M
+    // 勾选全部触发
+    checkAllBox(e) {
+      this.checkBoxList = e
     }
   }
 }
 </script>
 
+<template>
+  <div>
+    <div class="table">
+      <el-input
+        v-model="page.name"
+        placeholder="搜索歌手"
+        clearable
+      />
+      <el-input
+        v-model="page.album"
+        placeholder="搜索专辑"
+        clearable
+      />
+<!--      <el-select v-model="page.type" placeholder="搜索类型">-->
+<!--        <el-option label="男歌手" value="1" />-->
+<!--        <el-option label="女歌手" value="2" />-->
+<!--        <el-option label="团体" value="3" />-->
+<!--      </el-select>-->
+<!--      <el-select v-model="page.status" placeholder="搜索状态">-->
+<!--        <el-option label="启用" value="1" />-->
+<!--        <el-option label="关闭" value="2" />-->
+<!--      </el-select>-->
+      <el-button type="primary" @click="pageSearch">搜索</el-button>
+      <el-button type="danger" plain @click="closeStatus">锁定</el-button>
+      <el-button type="info" plain @click="enableStatus">启用</el-button>
+      <el-button type="success" class="add" @click="dialogFormVisible = true">添加音乐</el-button>
+      <el-dialog
+        title="添加音乐"
+        :visible.sync="dialogFormVisible"
+        top="20px"
+        width="900px"
+        :center="true"
+        :destroy-on-close="true"
+      >
+        <MusicBlock @FormVisible="watchFormVisible" />
+      </el-dialog>
+    </div>
+    <el-table
+      size="mini"
+      style="width: 100%"
+      height="500px"
+      :data="tableData"
+      :lazy="true"
+      :highlight-current-row="true"
+      @select="checkBox"
+      @select-all="checkAllBox"
+    >
+      <el-table-column
+        type="selection"
+        width="50"
+      />
+      <el-table-column
+        fixed
+        sortable="true"
+        prop="id"
+        label="id"
+        width="80"
+      />
+      <el-table-column
+        fixed
+        prop="name"
+        label="音乐名称"
+        width="150"
+      />
+      <el-table-column
+        prop="album"
+        label="唱片"
+        width="100"
+      >
+        <template slot-scope="scope">
+          <el-image :src="scope.row.avatar" :lazy="true" :preview-src-list="imgList" :height="70" />
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="singer"
+        label="歌手"
+        width="150"
+      />
+      <el-table-column
+        prop="audio"
+        label="音频"
+        width="200"
+      />
+      <el-table-column
+        prop="count"
+        label="播放次数"
+        width="120"
+      />
+      <el-table-column
+        prop="createTime"
+        label="发行时间"
+        width="150"
+      />
+      <el-table-column
+        fixed="right"
+        label="操作"
+        width="100"
+      >
+        <template slot-scope="scope">
+          <el-button type="text" size="mini" @click="handleClick(scope.row.id)">查看</el-button>
+          <el-button type="text" size="mini">编辑</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-pagination
+      background
+      layout="prev, pager, next"
+      :total="totalNum"
+      :page-size="page.pageSize"
+      :hide-on-single-page="true"
+      @current-change="pageChange"
+    />
+  </div>
+</template>
+
 <style scoped>
-.line {
-  text-align: center;
+.table {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+
+  .el-input {
+    width: 200px;
+    margin-left: 40px;
+  }
+  .el-input:nth-child(1){
+    margin-right: 40px;
+  }
+
+  .add {
+    margin-left: auto;
+    margin-right: 20px;
+  }
+
+  .el-dialog {
+    overflow: hidden;
+  }
 }
 </style>
-

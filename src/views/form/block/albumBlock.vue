@@ -48,7 +48,6 @@ export default {
         album: '',
         date1: '',
         date2: '',
-        delivery: false,
         type: [],
         resource: '',
         desc: ''
