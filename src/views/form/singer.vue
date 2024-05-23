@@ -18,7 +18,7 @@ export default {
       page: {
         page: 1,
         pageSize: 8,
-        status: undefined,
+        status: null,
         name: '',
         // 搜索类型
         type: undefined
@@ -50,9 +50,9 @@ export default {
       data.page.forEach(x => {
         this.imgList.push(x.avatar)
       })
-      this.page.type = undefined
-      this.page.name = undefined
-      this.page.status = undefined
+      this.page.type = null
+      this.page.name = null
+      this.page.status = null
     },
     // 锁定歌手
     async closeStatus() {
@@ -71,6 +71,7 @@ export default {
             type: 'success'
           })
         })
+      this.checkBoxList = []
     },
     // 启用歌手
     async enableStatus() {
@@ -89,27 +90,12 @@ export default {
             type: 'success'
           })
         })
-    },
-    // 歌手添加触发
-    watchFormVisible() {
-      this.dialogFormVisible = false
-      this.$message({
-        message: '添加成功',
-        type: 'success'
-      })
+      this.checkBoxList = []
     },
     // 点击分页触发
     pageChange(e) {
       this.page.page = e
       this.pageSearch()
-    },
-    // 勾选行触发
-    checkBox(e) {
-      this.checkBoxList = e
-    },
-    // 勾选全部触发
-    checkAllBox(e) {
-      this.checkBoxList = e
     }
   }
 }
@@ -140,9 +126,10 @@ export default {
         :visible.sync="dialogFormVisible"
         top="20px"
         width="900px"
+        fullscreen
         :center="true"
         :destroy-on-close="true">
-        <Singer @FormVisible="watchFormVisible" />
+        <Singer :dialog-form-visible.sync="dialogFormVisible" />
       </el-dialog>
     </div>
     <el-table
@@ -152,8 +139,8 @@ export default {
       :data="tableData"
       :lazy="true"
       :highlight-current-row="true"
-      @select="checkBox"
-      @select-all="checkAllBox"
+      @select="checkBoxList = $event"
+      @select-all="checkBoxList = $event"
     >
       <el-table-column
         type="selection"
@@ -216,8 +203,8 @@ export default {
       layout="prev, pager, next"
       :total="totalNum"
       :page-size="page.pageSize"
-      @current-change="pageChange"
       :hide-on-single-page="true"
+      @current-change="pageChange"
     />
   </div>
 </template>

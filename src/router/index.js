@@ -74,10 +74,10 @@ export const constantRoutes = [
         meta: { title: '音乐详情', icon: 'form' }
       },
       {
-        path: 'record',
-        name: 'Record',
-        component: () => import('@/views/form/block/albumBlock.vue'),
-        meta: { title: '歌单详情', icon: 'form' }
+        path: 'album',
+        name: 'Album',
+        component: () => import('@/views/form/album.vue'),
+        meta: { title: '专辑详情', icon: 'form' }
       }
     ]
   },

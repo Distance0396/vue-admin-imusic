@@ -1,3 +1,53 @@
+<script>
+import { save } from '@/api/singer'
+
+export default {
+  data() {
+    return {
+      singer: {
+        name: '',
+        type: '',
+        avatar: '',
+        description: ''
+      }
+    }
+  },
+  methods: {
+    async onSubmit() {
+      if (Object.keys(this.singer).length > 0) {
+        return this.$message({
+          message: '数据为空',
+          type: 'warning'
+        })
+      }
+      await save(this.singer).then(res => {
+        this.onCancel()
+      })
+    },
+    uploadOk(response, file, fileList) {
+      this.singer.avatar = response.data
+    },
+    // 校验数据类型与大小
+    beforeAvatarUpload(file) {
+      const isImage = file.type === 'image/jpeg' || file.type === 'image/png'
+      const isLt10M = file.size / 1024 / 1024 < 10
+
+      if (!isImage) {
+        this.$message.error('上传音频只能是 png/jpg 格式!')
+      }
+      if (!isLt10M) {
+        this.$message.error('上传图片大小不能超过 10MB!')
+      }
+      return isImage && isLt10M
+    },
+    // 取消页面函数
+    onCancel() {
+      this.$emit('update:dialog-form-visible', false)
+    }
+  }
+}
+</script>
+
 <template>
   <el-form ref="form" :model="singer" label-width="120px" size="mini">
     <div class="flex">
@@ -35,49 +85,6 @@
     </el-form-item>
   </el-form>
 </template>
-
-<script>
-import { save } from '@/api/singer'
-
-export default {
-  data() {
-    return {
-      singer: {
-        name: '',
-        type: '',
-        avatar: '',
-        description: ''
-      }
-    }
-  },
-  methods: {
-    async onSubmit() {
-      await save(this.singer).then(res => {
-        this.onCancel()
-      })
-    },
-    uploadOk(response, file, fileList) {
-      this.singer.avatar = response.data
-    },
-    // 校验数据类型与大小
-    beforeAvatarUpload(file) {
-      const isImage = file.type === 'image/jpeg' || file.type === 'image/png'
-      const isLt10M = file.size / 1024 / 1024 < 10
-
-      if (!isImage) {
-        this.$message.error('上传音频只能是 png/jpg 格式!')
-      }
-      if (!isLt10M) {
-        this.$message.error('上传图片大小不能超过 10MB!')
-      }
-      return isImage && isLt10M
-    },
-    onCancel() {
-      this.$emit('FormVisible')
-    }
-  }
-}
-</script>
 
 <style scoped>
 .line {

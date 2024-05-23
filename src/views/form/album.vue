@@ -1,58 +1,60 @@
 <script>
-import MusicBlock from '@/views/form/block/musicBlock.vue'
-import { changeStatus, getPageMusic } from '@/api/music'
+import Singer from '@/views/form/block/albumBlock.vue'
+import {changeStatus, getPageAlbum} from '@/api/album'
 
 export default {
   components: {
-    MusicBlock
+    Singer
   },
   data() {
     return {
       // 接受返回的数据集
       tableData: [],
-      // 勾选音乐行数组
+      // 勾选表单行数组
       checkBoxList: [],
-      // 勾选音乐行id数组
+      // 勾选歌手行id数组
       idList: '',
       // 分页搜索对象
       page: {
         page: 1,
         pageSize: 8,
+        status: '',
         name: '',
-        albumName: '',
-        singerName: '',
-        status: null
+        // 根据歌手
+        singerName: ''
       },
       // 总数据条数
       totalNum: 0,
       // 控制添加歌手块显示的显示
       dialogFormVisible: false,
-      viewMore: false
+      // 大图数组
+      imgList: []
     }
   },
-  created: function() {
+  created() {
     this.pageSearch()
   },
   methods: {
-    // 分页查询
+    // 查看歌手信息按钮
+    handleClick(row) {
+      console.log(row)
+    },
+    // 像后端发送分页请求
     async pageSearch() {
-      const { data } = await getPageMusic(this.page)
+      const { data } = await getPageAlbum(this.page)
       // 总数据条
       this.totalNum = data.total
       // 接受返回的数据集
       this.tableData = data.page
-
+      // 将返回的头像数据遍历出来放入大图数组中
+      data.page.forEach(x => {
+        this.imgList.push(x.image)
+      })
+      this.page.type = null
       this.page.name = null
       this.page.status = null
-      this.page.albumName = null
-      this.page.singerName = null
     },
-    // 点击分页触发
-    pageChange(e) {
-      this.page.page = e
-      this.pageSearch()
-    },
-    // 锁定歌手
+    // 锁定专辑
     async closeStatus() {
       if (this.checkBoxList.length === 0) {
         return this.$message({
@@ -70,7 +72,7 @@ export default {
           })
         })
     },
-    // 启用歌手
+    // 启用专辑
     async enableStatus() {
       if (this.checkBoxList.length === 0) {
         return this.$message({
@@ -88,59 +90,37 @@ export default {
           })
         })
     },
-    // 查看选项
-    handleClick(id) {
-      this.viewMore = true
+    // 点击分页触发
+    pageChange(e) {
+      this.page.page = e
+      this.pageSearch()
     }
   }
 }
 </script>
-
 <template>
   <div>
     <div class="table">
       <el-input
-        v-model="page.name"
-        placeholder="搜索音乐"
-        clearable
-      />
-      <el-input
         v-model="page.singerName"
-        placeholder="根据歌手搜索"
+        placeholder="搜索歌手"
         clearable
       />
-      <el-input
-        v-model="page.albumName"
-        placeholder="根据专辑搜索"
-        clearable
-      />
-      <el-select v-model="page.status" placeholder="搜索状态">
-        <el-option label="启用" value="1" />
-        <el-option label="关闭" value="2" />
-      </el-select>
-      <!--      <el-select v-model="page.type" placeholder="搜索类型">-->
-      <!--        <el-option label="男歌手" value="1" />-->
-      <!--        <el-option label="女歌手" value="2" />-->
-      <!--        <el-option label="团体" value="3" />-->
-      <!--      </el-select>-->
-      <!--      <el-select v-model="page.status" placeholder="搜索状态">-->
-      <!--        <el-option label="启用" value="1" />-->
-      <!--        <el-option label="关闭" value="2" />-->
-      <!--      </el-select>-->
-      <el-button class="left-btn" type="primary" @click="pageSearch">搜索</el-button>
+      <el-input v-model="page.name" placeholder="搜索专辑名"></el-input>
+      <el-input v-model="page.status" placeholder="搜索状态"></el-input>
+      <el-button type="primary" @click="pageSearch">搜索</el-button>
       <el-button type="danger" plain @click="closeStatus">锁定</el-button>
       <el-button type="info" plain @click="enableStatus">启用</el-button>
-      <el-button type="success" class="add" @click="dialogFormVisible = true">添加音乐</el-button>
+      <el-button type="success" class="add" @click="dialogFormVisible = true">添加专辑</el-button>
       <el-dialog
-        title="添加音乐"
+        title="添加专辑"
+        :visible.sync="dialogFormVisible"
         top="20px"
         width="900px"
-        :visible.sync="dialogFormVisible"
         fullscreen
         :center="true"
-        :destroy-on-close="true"
-      >
-        <MusicBlock :dialog-form-visible.sync="dialogFormVisible" />
+        :destroy-on-close="true">
+        <Singer :dialog-form-visible.sync="dialogFormVisible" />
       </el-dialog>
     </div>
     <el-table
@@ -155,63 +135,62 @@ export default {
     >
       <el-table-column
         type="selection"
-        width="50"
+        width="55"
       />
       <el-table-column
         fixed
         sortable="true"
         prop="id"
         label="id"
-        width="80"
+        width="100"
+      />
+      <el-table-column
+        prop="singerId"
+        label="歌手"
+        width="100"
       />
       <el-table-column
         fixed
         prop="name"
-        label="音乐名称"
-        width="200"
-      />
-      <el-table-column
-        prop="albumName"
-        label="唱片"
-        width="100"
-      >
-<!--        <template slot-scope="scope">-->
-<!--          <el-image :src="scope.row.avatar" :lazy="true" :preview-src-list="imgList" :height="70" />-->
-<!--        </template>-->
-      </el-table-column>
-      <el-table-column
-        prop="singerName"
-        label="歌手"
-        width="150"
-      />
-      <el-table-column
-        prop="audio"
-        label="音频"
-        width="200"
-      />
-      <el-table-column
-        prop="count"
-        label="播放次数"
+        label="专辑名称"
         width="120"
       />
       <el-table-column
-        prop="createTime"
+        prop="image"
+        label="封面"
+        width="100"
+      >
+        <template slot-scope="scope">
+          <el-image :src="scope.row.image" :lazy="true" :preview-src-list="imgList" :height="100"/>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="status"
+        label="状态(1.启用2.锁定)"
+        width="150"
+      />
+<!--      <el-table-column-->
+<!--        prop="description"-->
+<!--        label="描述"-->
+<!--        width="180"-->
+<!--      />-->
+      <el-table-column
+        prop="releaseTime"
         label="发行时间"
         width="150"
       />
       <el-table-column
-        prop="status"
-        label="状态"
-        width="80"
+        prop="createTime"
+        label="入站时间"
+        width="150"
       />
       <el-table-column
         fixed="right"
         label="操作"
-        width="100"
-      >
+        width="100">
         <template slot-scope="scope">
-          <el-button type="text" size="mini" @click="handleClick(scope.row.id)">查看</el-button>
-<!--          <el-button type="text" size="mini">编辑</el-button>-->
+          <el-button @click="handleClick(scope.row.id)" type="text" size="mini">查看</el-button>
+          <el-button type="text" size="mini">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -223,29 +202,20 @@ export default {
       :hide-on-single-page="true"
       @current-change="pageChange"
     />
-    <el-dialog
-      title="修改音乐"
-      :visible.sync="viewMore"
-      fullscreen
-      :center="true"
-      :destroy-on-close="true"
-    >
-      <MusicBlock :dialog-form-visible.sync="viewMore" />
-    </el-dialog>
   </div>
 </template>
-
 <style scoped>
 .table {
   display: flex;
   align-items: center;
   margin-top: 20px;
-  .left-btn{
-    margin-left: 20px;
-  }
+
   .el-input {
     width: 200px;
-    margin-left: 20px;
+    margin-left: 40px;
+  }
+  .el-input:nth-child(3){
+    margin-right: 40px;
   }
 
   .add {
@@ -256,5 +226,8 @@ export default {
   .el-dialog {
     overflow: hidden;
   }
+}
+.cell{
+  white-space: nowrap;
 }
 </style>

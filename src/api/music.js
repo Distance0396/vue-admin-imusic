@@ -7,3 +7,19 @@ export const getPageMusic = (page) => {
     }
   })
 }
+
+export const save = (dto) => {
+  return Request.post('/music/save', {
+    ...dto
+  })
+}
+
+// 锁定歌手
+export const changeStatus = (status, id) => {
+  return Request.put(`/music/${status}`, null, {
+    params: {
+      id
+    }
+  })
+}
+
