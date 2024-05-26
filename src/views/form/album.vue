@@ -1,6 +1,6 @@
 <script>
 import Singer from '@/views/form/block/albumBlock.vue'
-import {changeStatus, getPageAlbum} from '@/api/album'
+import { albumDetails, changeStatus, getPageAlbum } from '@/api/album'
 
 export default {
   components: {
@@ -28,7 +28,10 @@ export default {
       // 控制添加歌手块显示的显示
       dialogFormVisible: false,
       // 大图数组
-      imgList: []
+      imgList: [],
+      dialogForm: false,
+      music: [],
+      album: {}
     }
   },
   created() {
@@ -36,8 +39,15 @@ export default {
   },
   methods: {
     // 查看歌手信息按钮
-    handleClick(row) {
-      console.log(row)
+    async handleClick(id) {
+      const { data } = await albumDetails(id)
+      console.log(data)
+      this.dialogForm = true
+      // this.music = data.musicList
+      // this.album = data
+      this.$nextTick(() => {
+        this.$refs.add.add(data, data.musicList)
+      })
     },
     // 像后端发送分页请求
     async pageSearch() {
@@ -189,8 +199,7 @@ export default {
         label="操作"
         width="100">
         <template slot-scope="scope">
-          <el-button @click="handleClick(scope.row.id)" type="text" size="mini">查看</el-button>
-          <el-button type="text" size="mini">编辑</el-button>
+          <el-button size="mini" type="text" @click="handleClick(scope.row.id)">查看</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -202,6 +211,17 @@ export default {
       :hide-on-single-page="true"
       @current-change="pageChange"
     />
+    <el-dialog
+      title="修改专辑"
+      :visible.sync="dialogForm"
+      top="20px"
+      width="900px"
+      fullscreen
+      :music="album"
+      :center="true"
+      :destroy-on-close="true">
+      <Singer ref="add" :dialog-form-visible.sync="dialogForm"/>
+    </el-dialog>
   </div>
 </template>
 <style scoped>

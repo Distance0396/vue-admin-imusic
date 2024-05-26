@@ -26,10 +26,23 @@ export const changeStatus = (status, id) => {
   })
 }
 
+// 根据歌手名字查询专辑
 export const findSingerByName = (name) => {
   return Request.get('/singer/album', {
     params: {
       name
     }
+  })
+}
+
+// 根据id查找歌手详情
+export const singerDetails = (id) => {
+  return Request.get(`/singer/${id}`)
+}
+
+// 修改歌手
+export const update = (singer) => {
+  return Request.put('/singer/', {
+    ...singer
   })
 }

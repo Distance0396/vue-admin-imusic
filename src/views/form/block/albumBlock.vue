@@ -2,19 +2,34 @@
   <div class="app-container">
     <el-form ref="form" :model="album" label-width="auto">
       <el-form-item label="歌手">
-        <el-input v-model="album.singerName" />
+        <el-input v-model="album.singerName" :disabled="album.musicList != null" />
       </el-form-item>
       <el-form-item label="专辑名称">
         <el-input v-model="album.name" />
       </el-form-item>
       <el-form-item label="发行时间">
         <el-col :span="11">
-          <el-date-picker v-model="album.releaseTime" type="date" value-format="yyyy-MM-dd HH:mm:ss" placeholder="Pick a date" style="width: 100%;" />
+          <el-date-picker v-model="album.releaseTime" type="date" value-format="yyyy-MM-dd HH:mm" placeholder="Pick a date" style="width: 100%;" />
         </el-col>
       </el-form-item>
-      <el-form-item label="添加封面">
+      <el-form-item v-if="album.image != null && music != null" label="修改封面">
         <el-upload
-          class="upload-demo"
+          class="avatar-uploader"
+          drag
+          action="http://localhost:8011/common/upload"
+          :before-upload="beforeAvatarUpload"
+          :auto-upload="true"
+          :on-success="uploadOk"
+        >
+          <el-image v-if="album" :src="album.image" :fit="cover" class="avatar" />
+          <i class="el-icon-upload" />
+          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+          <div slot="tip" class="el-upload__tip">只能上传image/jpeg文件，且不超过10mb</div>
+        </el-upload>
+      </el-form-item>
+      <el-form-item v-else label="添加封面">
+        <el-upload
+          class="avatar-uploader"
           drag
           action="http://localhost:8011/common/upload"
           :before-upload="beforeAvatarUpload"
@@ -26,20 +41,30 @@
           <div slot="tip" class="el-upload__tip">只能上传image/jpeg文件，且不超过10mb</div>
         </el-upload>
       </el-form-item>
-      <el-form-item label="歌词" style="height: 60px; line-height: 60px;">
-        <el-input v-model="album.description" type="textarea"/>
-      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" @click="onSubmit">上传</el-button>
         <el-button @click="onCancel">取消</el-button>
       </el-form-item>
     </el-form>
+    <div class="left">
+      <el-form>
+        <el-form-item label="介绍">
+          <el-input v-model="album.description" type="textarea" autosize />
+        </el-form-item>
+      </el-form>
+      <el-table v-if="music != null" :data="music">
+        <el-table-column property="name" label="歌曲名称" width="350" />
+        <el-table-column property="count" label="播放次数" width="200" />
+        <el-table-column property="status" label="状态" />
+      </el-table>
+    </div>
   </div>
 </template>
 
 <script>
 
-import { save } from '@/api/album'
+import { save, update } from '@/api/album'
 
 export default {
   data() {
@@ -50,10 +75,15 @@ export default {
         image: '',
         releaseTime: '',
         description: ''
-      }
+      },
+      music: null
     }
   },
   methods: {
+    add(album, music) {
+      this.album = album
+      this.music = music
+    },
     async onSubmit() {
       if (!this.album.singerName && !this.album.name && !this.album.image && !this.album.releaseTime) {
         this.onCancel()
@@ -63,12 +93,21 @@ export default {
         })
         return
       }
-      await save(this.album).then(res => {
-        this.$message({
-          message: '添加为空',
-          type: 'success'
+      if (this.music) {
+        await update(this.album).then(() => {
+          this.$message({
+            message: '修改成功',
+            type: 'success'
+          })
         })
-      })
+      } else {
+        await save(this.album).then(() => {
+          this.$message({
+            message: '添加成功',
+            type: 'success'
+          })
+        })
+      }
       this.onCancel()
     },
     // 上传音乐后的回调函数
@@ -100,5 +139,23 @@ export default {
 .line {
   text-align: center;
 }
+.app-container{
+  display: flex;
+  justify-content: flex-start;
+  .el-form{
+    margin-right: 150px;
+    width: 400px;
+    .el-form-item{
+      .el-input{
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+    .avatar-uploader{
+      .el-upload-dragger{
+        width: 100%;
+      }
+    }
+  }
+}
 </style>
-

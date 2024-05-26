@@ -1,6 +1,6 @@
 <script>
 import MusicBlock from '@/views/form/block/musicBlock.vue'
-import { changeStatus, getPageMusic } from '@/api/music'
+import { changeStatus, getPageMusic, musicDetails } from '@/api/music'
 
 export default {
   components: {
@@ -27,7 +27,7 @@ export default {
       totalNum: 0,
       // 控制添加歌手块显示的显示
       dialogFormVisible: false,
-      viewMore: false
+      dialogForm: false
     }
   },
   created: function() {
@@ -62,7 +62,7 @@ export default {
       }
       this.idList = this.checkBoxList.map(x => x.id)
       await changeStatus(2, this.idList.join())
-        .then(res => {
+        .then(() => {
           this.pageSearch()
           this.$message({
             message: '修改成功',
@@ -80,7 +80,7 @@ export default {
       }
       this.idList = this.checkBoxList.map(x => x.id)
       await changeStatus(1, this.idList.join())
-        .then(res => {
+        .then(() => {
           this.pageSearch()
           this.$message({
             message: '修改成功',
@@ -89,8 +89,12 @@ export default {
         })
     },
     // 查看选项
-    handleClick(id) {
-      this.viewMore = true
+    async handleClick(id) {
+      const { data } = await musicDetails(id)
+      this.dialogForm = true
+      this.$nextTick(() => {
+        this.$refs.add.update(data)
+      })
     }
   }
 }
@@ -173,7 +177,7 @@ export default {
       <el-table-column
         prop="albumName"
         label="唱片"
-        width="100"
+        width="150"
       >
 <!--        <template slot-scope="scope">-->
 <!--          <el-image :src="scope.row.avatar" :lazy="true" :preview-src-list="imgList" :height="70" />-->
@@ -192,7 +196,7 @@ export default {
       <el-table-column
         prop="count"
         label="播放次数"
-        width="120"
+        width="100"
       />
       <el-table-column
         prop="createTime"
@@ -202,7 +206,7 @@ export default {
       <el-table-column
         prop="status"
         label="状态"
-        width="80"
+        width="50"
       />
       <el-table-column
         fixed="right"
@@ -225,12 +229,12 @@ export default {
     />
     <el-dialog
       title="修改音乐"
-      :visible.sync="viewMore"
+      :visible.sync="dialogForm"
       fullscreen
       :center="true"
       :destroy-on-close="true"
     >
-      <MusicBlock :dialog-form-visible.sync="viewMore" />
+      <MusicBlock ref="add" :dialog-form-visible.sync="dialogForm" />
     </el-dialog>
   </div>
 </template>

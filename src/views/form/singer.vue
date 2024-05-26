@@ -1,9 +1,11 @@
 <script>
 import Singer from '@/views/form/block/singerBlock.vue'
-import { changeStatus, getPageSinger } from '@/api/singer'
+import { changeStatus, getPageSinger, singerDetails } from '@/api/singer'
+import SingerBlock from '@/views/form/block/singerBlock.vue'
 
 export default {
   components: {
+    SingerBlock,
     Singer
   },
   data() {
@@ -28,7 +30,8 @@ export default {
       // 控制添加歌手块显示的显示
       dialogFormVisible: false,
       // 大图数组
-      imgList: []
+      imgList: [],
+      dialogForm: false
     }
   },
   created() {
@@ -36,8 +39,12 @@ export default {
   },
   methods: {
     // 查看歌手信息按钮
-    handleClick(row) {
-      console.log(row)
+    async handleClick(id) {
+      const { data } = await singerDetails(id)
+      this.dialogForm = true
+      this.$nextTick(() => {
+        this.$refs.singer.update(data)
+      })
     },
     // 像后端发送分页请求
     async pageSearch() {
@@ -64,7 +71,7 @@ export default {
       }
       this.idList = this.checkBoxList.map(x => x.id)
       await changeStatus(2, this.idList.join())
-        .then(res => {
+        .then(() => {
           this.pageSearch()
           this.$message({
             message: '修改成功',
@@ -83,7 +90,7 @@ export default {
       }
       this.idList = this.checkBoxList.map(x => x.id)
       await changeStatus(1, this.idList.join())
-        .then(res => {
+        .then(() => {
           this.pageSearch()
           this.$message({
             message: '修改成功',
@@ -109,13 +116,13 @@ export default {
         clearable
       />
       <el-select v-model="page.type" placeholder="搜索类型">
-        <el-option label="男歌手" value="1"/>
-        <el-option label="女歌手" value="2"/>
-        <el-option label="团体" value="3"/>
+        <el-option label="男歌手" value="1" />
+        <el-option label="女歌手" value="2" />
+        <el-option label="团体" value="3" />
       </el-select>
       <el-select v-model="page.status" placeholder="搜索状态">
-        <el-option label="启用" value="1"/>
-        <el-option label="关闭" value="2"/>
+        <el-option label="启用" value="1" />
+        <el-option label="关闭" value="2" />
       </el-select>
       <el-button type="primary" @click="pageSearch">搜索</el-button>
       <el-button type="danger" plain @click="closeStatus">锁定</el-button>
@@ -128,7 +135,8 @@ export default {
         width="900px"
         fullscreen
         :center="true"
-        :destroy-on-close="true">
+        :destroy-on-close="true"
+      >
         <Singer :dialog-form-visible.sync="dialogFormVisible" />
       </el-dialog>
     </div>
@@ -165,7 +173,7 @@ export default {
         width="100"
       >
         <template slot-scope="scope">
-          <el-image :src="scope.row.avatar" :lazy="true" :preview-src-list="imgList" :height="70"/>
+          <el-image :src="scope.row.avatar" :lazy="true" :preview-src-list="imgList" :height="70" />
         </template>
       </el-table-column>
       <el-table-column
@@ -191,10 +199,10 @@ export default {
       <el-table-column
         fixed="right"
         label="操作"
-        width="100">
+        width="100"
+      >
         <template slot-scope="scope">
-          <el-button @click="handleClick(scope.row.id)" type="text" size="mini">查看</el-button>
-          <el-button type="text" size="mini">编辑</el-button>
+          <el-button type="text" size="mini" @click="handleClick(scope.row.id)">查看</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -206,6 +214,15 @@ export default {
       :hide-on-single-page="true"
       @current-change="pageChange"
     />
+    <el-dialog
+      title="修改歌手"
+      :visible.sync="dialogForm"
+      fullscreen
+      :center="true"
+      :destroy-on-close="true"
+    >
+      <SingerBlock ref="singer" :dialog-form-visible.sync="dialogForm" />
+    </el-dialog>
   </div>
 </template>
 <style scoped>
